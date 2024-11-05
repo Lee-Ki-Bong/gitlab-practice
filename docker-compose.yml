@@ -1,0 +1,64 @@
+version: '3.7'
+
+services:
+  gitlab:
+    image: gitlab/gitlab-ce:latest
+    container_name: gitlab
+    hostname: gitlab.local
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        external_url 'http://gitlab.local'
+        gitlab_rails['lfs_enabled'] = true
+        gitlab_rails['gitlab_shell_ssh_port'] = 2224
+    ports:
+      - '80:80'
+      - '443:443'
+      - '2224:22'
+    volumes:
+      - '${PROJECT_ROOT_DIR}/gitlab/config:/etc/gitlab'
+      - '${PROJECT_ROOT_DIR}/gitlab/logs:/var/log/gitlab'
+      - '${PROJECT_ROOT_DIR}/gitlab/data:/var/opt/gitlab'
+    deploy:
+      resources:
+        limits:
+          memory: 8GiB  # GitLab 메모리 제한을 8GB로 늘림
+        reservations:
+          memory: 4GiB  # GitLab 최소 메모리 예약      
+    networks:
+      - gitlab-practice
+
+  project-repository:
+    command: sleep infinity
+    container_name: project-repository
+    build:
+      context: .
+      dockerfile: ${BACKEND_DOCKER_FILE}
+    ports:
+      - "3000:3000"
+    depends_on:
+      - gitlab      
+    volumes:
+      - '${PROJECT_ROOT_DIR}/project-root:/home'
+    working_dir: /home
+    networks:
+      - gitlab-practice
+
+  production-repository:
+    command: sleep infinity
+    container_name: production-repository
+    build:
+      context: .
+      dockerfile: ${BACKEND_DOCKER_FILE}
+    ports:
+      - "3001:3000"
+    depends_on:
+      - gitlab      
+    volumes:
+      - '${PRODUCTION_PROJECT_ROOT_DIR}/production-root:/home'
+    working_dir: /home
+    networks:
+      - gitlab-practice
+
+networks:
+  gitlab-practice:
+    driver: bridge
