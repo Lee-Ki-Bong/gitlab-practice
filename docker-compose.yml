@@ -11,7 +11,7 @@ services:
         gitlab_rails['lfs_enabled'] = true
         gitlab_rails['gitlab_shell_ssh_port'] = 2224
     ports:
-      - '80:80'
+      - '7000:80'
       - '443:443'
       - '2224:22'
     volumes:
